@@ -37,7 +37,7 @@ The following image provides a view of the proposed architecture for deploying w
 
 <br>
 
-1. User makes the request to the website. 
+1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/dev-01.png) User makes the request to the website. 
 2. Route53, acting as DNS, routes the request to the corresponding Cloudfront distribution
 3. ACM is integrated with CloudFront to deploy the ACM certificate on the CloudFront distributions
 4. If the requested content can be served from the cache it will be delivered immediately from the edge location closest to the user. If the content is not cached, CloudFront requests the content directly from S3 buckets
