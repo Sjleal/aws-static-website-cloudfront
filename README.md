@@ -1,4 +1,4 @@
-# Using AWS Cloudformation to automate the setup of a website hosting on Amazon S3 bucket with CloudFront + Route53
+# Using AWS Cloudformation to automate the setup of a website hosting on Amazon S3 bucket with CloudFront and Route53
 ## Overview
 
 This project offers a solution to a specific scenario, deploying a static website to an Amazon S3 bucket and distributing it with Amazon CloudFront. With Aws CloudFormation, it was possible to automate the creation and provision of AWS infrastructure deployments, using template files to create or delete resources in a single unit as a stack. To meet the goal of this project, the steps were executed: 
@@ -24,6 +24,33 @@ As you can see, most of the steps will be automated in an AWS CloudFormation tem
 ## Architecture
 
 The following image provides a view of the proposed architecture for deploying website resources.
+
+1. A CloudFormation template is designed to provision the resources for this solution
+2. The stack is created in CloudFormation with the appropriate role adhering to the least privilege principle
+ 
+<br>
+
+1. Developer makes changes to the website and pushes them to the remote repository
+2. Using the AWS Connector application on GitHub, the connection to AWS has been established to report changes to the project.
+3. A trigger is activated and the source stage of the pipeline is started.
+4. The deployment stage starts, which updates the files in the S3 bucket
+
+<br>
+
+1. User makes the request to the website. 
+2. Route53, acting as DNS, routes the request to the corresponding Cloudfront distribution
+3. ACM is integrated with CloudFront to deploy the ACM certificate on the CloudFront distributions
+4. If the requested content can be served from the cache it will be delivered immediately from the edge location closest to the user. If the content is not cached, CloudFront requests the content directly from S3 buckets
+
+   A. The request is for the subdomain bucket, it contains the website and delivered to Cloudfront.
+    
+   B. The request is for the domain bucket, in this case the request is redirected to the subdomain bucket, and delivered to Cloudfront.
+
+5. Cloudfront gets the updated content from the subdomain bucket.    
+6. Cloudfront return the content
+7. User gets the response
+
+
 
 
 
@@ -78,10 +105,10 @@ To host the website, it is necessary to create two S3 buckets, one of them as su
 
 ~~~
 Resources:
-  s3bucket-sub:
+  s3bucketsub:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Sub ${p_sub}.${p_root}
+      BucketName: !Sub ${psub}.${proot}
       WebsiteConfiguration:
         IndexDocument: index.html
         ErrorDocument: error.html
@@ -92,13 +119,13 @@ Resources:
         - BucketKeyEnabled: true
           ServerSideEncryptionByDefault:
             SSEAlgorithm: "AES256"
-  s3bucket-root:
+  s3bucketroot:
     Type: 'AWS::S3::Bucket'
     Properties:
-      BucketName: !Ref p_root
+      BucketName: !Ref proot
       WebsiteConfiguration:
         RedirectAllRequestsTo:
-          HostName: !Ref s3bucket-sub
+          HostName: !Ref s3bucketsub
           Protocol: https
       AccessControl: BucketOwnerFullControl
 ~~~
@@ -113,12 +140,12 @@ If you have already registered your domain with AWS, Route 53 automatically crea
 
 ~~~
 Resources:
-  r53host-zone:
+  r53hostzone:
     Type: 'AWS::Route53::HostedZone'
     Properties:
       HostedZoneConfig: 
-        Comment: !Sub Public hosted zone for ${p_root}
-      Name: !Ref p_root
+        Comment: !Sub Public hosted zone for ${proot}
+      Name: !Ref proot
 ~~~
 
 
@@ -133,12 +160,12 @@ Resources:
   sslcert:
     Type: 'AWS::CertificateManager::Certificate'
     Properties:
-      DomainName: !Ref p_root
+      DomainName: !Ref proot
       SubjectAlternativeNames:
-        - !Sub '*.${p_root}'
+        - !Sub '*.${proot}'
       DomainValidationOptions:
-        - DomainName: !Ref p_root
-          HostedZoneId: !GetAtt r53host-zone.Id
+        - DomainName: !Ref proot
+          HostedZoneId: !GetAtt r53hostzone.Id
       ValidationMethod: DNS
 ~~~
 
@@ -154,7 +181,7 @@ If you want to restrict access to an Amazon Simple Storage Service origin, you c
 
 ~~~
 Resources:
-  cf-oai:
+  cfoai:
     Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
     Properties:
       CloudFrontOriginAccessIdentityConfig:
@@ -171,25 +198,25 @@ Now it's time to add a policy to the website bucket and grant access only to the
 
 ~~~
 Resources:
-  policy-s3bucket-sub:
+  policys3bucketsub:
     Type: 'AWS::S3::BucketPolicy'
     Properties:
-      Bucket: !Sub '${p_sub}.${p_root}'
+      Bucket: !Sub '${psub}.${proot}'
       PolicyDocument:
         Version: "2012-10-17"
         Statement:
         - Action: 's3:GetObject'
           Effect: Allow
-          Resource: !Sub 'arn:aws:s3:::${p_sub}.${p_root}/*'
+          Resource: !Sub 'arn:aws:s3:::${psub}.${proot}/*'
           Principal:
-            CanonicalUser: !GetAtt cf-oai.S3CanonicalUserId
+            CanonicalUser: !GetAtt cfoai.S3CanonicalUserId
         - Sid: AllowSSLRequestsOnly 
           Effect: Deny
           Principal: '*'
           Action: 's3:*'
           Resource:
-          - !Sub 'arn:aws:s3:::${p_sub}.${p_root}'
-          - !Sub 'arn:aws:s3:::${p_sub}.${p_root}/*'
+          - !Sub 'arn:aws:s3:::${psub}.${proot}'
+          - !Sub 'arn:aws:s3:::${psub}.${proot}/*'
           Condition:
             Bool:
               'aws:SecureTransport': false
@@ -208,18 +235,18 @@ The following code was used to create and configure the resources via cloudforma
 
 ~~~
 Resources:
-  cf-dist-sub:
+  cfdistsub:
     Type: 'AWS::CloudFront::Distribution'
     Properties:
       DistributionConfig:
         Comment: CloudFront distribution points to S3 bucket for subdomain
         Origins:
-          - DomainName: !Sub '${p_sub}.${p_root}.s3.${AWS::Region}.amazonaws.com'
-            Id: !Sub 'S3Origin-${p_sub}.${p_root}'
+          - DomainName: !Sub '${psub}.${proot}.s3.${AWS::Region}.amazonaws.com'
+            Id: !Sub 'S3Origin-${psub}.${proot}'
             S3OriginConfig:
-              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${cf-oai}'
+              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${cfoai}'
         Aliases:
-          - !Sub '${p_sub}.${p_root}'
+          - !Sub '${psub}.${proot}'
         CustomErrorResponses:
           - ErrorCode: 403
             ResponseCode: 404
@@ -242,7 +269,7 @@ Resources:
               Forward: none
           MaxTTL: 86400
           MinTTL: 60
-          TargetOriginId: !Sub 'S3Origin-${p_sub}.${p_root}'
+          TargetOriginId: !Sub 'S3Origin-${psub}.${proot}'
           ViewerProtocolPolicy: 'redirect-to-https'
         DefaultRootObject: 'index.html' 
         Enabled: true
@@ -251,20 +278,20 @@ Resources:
         ViewerCertificate:
           AcmCertificateArn: !Ref sslcert
           SslSupportMethod: sni-only
-  cf-dist-root:
+  cfdistroot:
     Type: 'AWS::CloudFront::Distribution'
     Properties:
       DistributionConfig:
         Comment: CloudFront distribution points to S3 bucket for root domain
         Origins: 
-          - DomainName: !Sub '${p_root}.s3-website-${AWS::Region}.amazonaws.com'
-            Id: !Sub 'RedirectS3Origin-${p_root}' 
+          - DomainName: !Sub '${proot}.s3-website-${AWS::Region}.amazonaws.com'
+            Id: !Sub 'RedirectS3Origin-${proot}' 
             CustomOriginConfig:
               HTTPPort: 80
               HTTPSPort: 443
               OriginProtocolPolicy: 'http-only' 
         Aliases:
-          - !Sub '${p_root}'
+          - !Sub '${proot}'
         CustomErrorResponses:
           - ErrorCode: 403
             ResponseCode: 404
@@ -287,7 +314,7 @@ Resources:
               Forward: none
           MaxTTL: 86400
           MinTTL: 60
-          TargetOriginId: !Sub 'RedirectS3Origin-${p_root}'
+          TargetOriginId: !Sub 'RedirectS3Origin-${proot}'
           ViewerProtocolPolicy: 'redirect-to-https'
         DefaultRootObject: 'index.html' 
         Enabled: true
@@ -307,21 +334,21 @@ Now you need to create record set to route DNS traffic for domain and subdomain 
 
 ~~~
 Resources:
-  r53host-zone-records:
+  r53hostzonerecords:
     Type: 'AWS::Route53::RecordSetGroup'
     Properties:
       Comment: Route53 record for CloudFront distributions for root domain and subdomain
-      HostedZoneId: !GetAtt r53host-zone.Id
+      HostedZoneId: !GetAtt r53hostzone.Id
       RecordSets:
-        - Name: !Sub '${p_sub}.${p_root}.'
+        - Name: !Sub '${psub}.${proot}.'
           Type: A
           AliasTarget:
-              DNSName: !GetAtt cf-dist-sub.DomainName
+              DNSName: !GetAtt cfdistsub.DomainName
               HostedZoneId: Z2FDTNDATAQYW2
-        - Name: !Sub '${p_root}.'
+        - Name: !Sub '${proot}.'
           Type: A
           AliasTarget:
-              DNSName: !GetAtt cf-dist-root.DomainName 
+              DNSName: !GetAtt cfdistroot.DomainName 
               HostedZoneId: Z2FDTNDATAQYW2
 ~~~
 
@@ -335,14 +362,14 @@ Once we have finished designing the template for our stack, it is time to build 
 
 You can use a tool named [Application Composer](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/app-composer-for-cloudformation.html) in CloudFormation console mode to validate your template and also you can drag, drop, configure, and connect a variety of resources onto a visual canvas.
 
-To create the stack you need to follow these steps:
+To [create the stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html) you need to follow these steps:
 
 1. Logging in to the AWS Management console and open the AWS CloudFormation console. 
-2. Choose Create Stack to start the Create Stack wizard. [How to](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-create-stack.html)
-3. Selecting a stack template. On the Specify template page, choose Upload a template file to select the CloudFormation template designed.
-4. Specifying stack parameters. On the Specify stack details page, type a stack name in the Stack name box. In the Parameters section, specify parameters domain, subdomain, and the unique tag.
-5. Setting AWS CloudFormation stack options
-6. Reviewing your stack
+2. Choose Create Stack to start the Create Stack wizard.
+3. __Selecting a stack template.__ On the Specify template page, choose Upload a template file to select the CloudFormation template designed.
+4. __Specifying stack parameters.__ On the Specify stack details page, type a stack name in the Stack name box. In the Parameters section, specify parameters domain, subdomain, and the unique tag.
+5. __Setting AWS CloudFormation stack options.__ On _Permissions - optional_, select a role that allow to this stack create, update or delete the resources involved, __IMPORTANT:__ you can create this role on IAM console but remember using the least privilege principle. In _Stack failure options_ you can set the stack behavior in case of provisioning failure.
+6. __Reviewing your stack.__ Here You can review the selected options and press Submmit button to start the creation process.
 
 <br>
 
@@ -354,39 +381,41 @@ In this section
 
 <br>
 
-**3. Creating a pipeline**
+**10. Creating a pipeline**
 
+Once the resources have been created, we need to upload the files needed to update the website. To do this, we need to create a pipeline that allows us to upload a change to our GitHub repository and automatically update it to the S3 bucket.
 
-1. Register a domain.
+To create a [Pipeline](https://docs.aws.amazon.com/codepipeline/latest/userguide/pipelines-create.html) you need to follow these steps:
 
-2. Create a static html website.
-   - Create a Github repository
-   - Create a ssh key and upload to github account to commit changes
+1. Logging in to the AWS Management console and open the CodePipeline console.
+2. Choose Pipeline in the left column and click in Create pipeline to start the pipeline wizard.
+   1. __Choose pipeline settings.__
+        - Pipeline name: _Project-name_
+        - Execution mode: Queued
+        - Service role: New service role
+   2. __Add source stage.__
+        - Source provider: GitHub (Version 2)
+        - Connection: Connect to GitHub 
+          - Connection name: _Project-connection_
+          - GitHub Apps: Install a new app
+            - Login to [GitHub.com](https://github.com/)
+            - Install the AWS Connector for GitHub
+            - Repository access: Only selected repositories
+        - Repository name: _Project-name_
+        - Default branch: main
+        - Trigger
+          - Trigger type: No filter
+   3. __Add build stage.__
+        - Skip build stage
+   4. __Add deploy stage.__
+        - Deploy provider: Amazon S3
+        - Bucket: Project-Bucket
+        - Extract file before deploy: Check
+   5. __Review.__
+        - Create pipeline
 
-3. Create a pipeline in Codepipeline.
-   - Choose pipeline settings:
-     - Pipeline name: Project-name
-     - Execution mode: Queued
-     - Service role: New service role
-   - Add source stage
-     - Source provider: GitHub (Version 2)
-     - Connection: Connect to GitHub 
-       - Connection name: Project-connection
-       - GitHub Apps: Install a new app
-         - Login to GitHub
-         - Install the AWS Connector for GitHub
-         - Repository access: Only selected repositories
-     - Repository name: Project-name
-     - Default branch: main
-     - Trigger
-       - Trigger type: No filter
-   - Add build stage
-     - Skip build stage
-   - Add deploy stage
-     - Deploy provider: Amazon S3
-     - Bucket: Project-Bucket
-     - Extract file before deploy: Check
-   - Review
-     - Create pipeline
+<br>
 
-4. 
+**11. Uploading files to website**
+
+Once the steps above are complete, you can make changes to your website code (any HTML, CSS, or Java files) and push the files to your remote repository ([GitHub.com](https://github.com/)). You can then verify in the pipeline that the source and deploy stages were triggered and the changes are uploaded to the repository within seconds. You can then visit your website to verify those changes were applied.
