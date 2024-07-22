@@ -30,7 +30,7 @@ The following image provides a view of the proposed architecture for deploying w
  
 <br>
 
-1. Developer makes changes to the website and pushes them to the remote repository
+1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/arc-01.png)Developer makes changes to the website and pushes them to the remote repository
 2. Using the AWS Connector application on GitHub, the connection to AWS has been established to report changes to the project.
 3. A trigger is activated and the source stage of the pipeline is started.
 4. The deployment stage starts, which updates the files in the S3 bucket
