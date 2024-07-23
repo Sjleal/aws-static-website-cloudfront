@@ -29,7 +29,7 @@ As you can see, most of the steps will be automated in an AWS CloudFormation tem
 
 The following image provides a view of the proposed architecture for deploying website resources.
 
-![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/dev/aws-website-cloudfront.png)
+![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/aws-website-cloudfront.png)
 
 1. A CloudFormation template is designed to provision the resources for this solution
 2. The stack is created in CloudFormation with the appropriate role, adhering to the least privilege principle
