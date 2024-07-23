@@ -1,7 +1,11 @@
 # Using AWS Cloudformation to automate the setup of a website hosting on Amazon S3 bucket with CloudFront and Route53
 ## Overview
 
-This project offers a solution to a specific scenario, deploying a static website to an Amazon S3 bucket and distributing it with Amazon CloudFront. With Aws CloudFormation, it was possible to automate the creation and provision of AWS infrastructure deployments, using template files to create or delete resources in a single unit as a stack. To meet the goal of this project, the steps were executed: 
+This project offers a solution to a specific scenario, deploying a static website to an Amazon S3 bucket and distributing it with Amazon CloudFront. With Aws CloudFormation, it was possible to automate the creation and provision of AWS infrastructure deployments, using template files to create or delete resources in a single unit as a stack.
+
+Once the stack is created, the files must be uploaded to the S3 bucket. To do this, a pipeline with two stages will be created: source and deployment. The source stage will be triggered when a commit is made to the remote repository, and the updated files will then be uploaded to the bucket by the deploy stage.
+
+To meet the goal of this project, it has been divided into 3 sections. The first one prepares the website code and domain registration. The second is in charge of designing a template to create our stack in CloudFormation. Finally, the third section will be responsible for creating a pipeline that automates the deployment of the website.
 
 #### Initial setup
 + Step 1. **Creating a static webstite.**
@@ -16,8 +20,8 @@ This project offers a solution to a specific scenario, deploying a static websit
 + Step 9. **Routing DNS traffic using Route 53.**
 + Step 10. **Creating the stack.**
 #### Final steps
-+ Step 10. **Creating a pipeline.**
-+ Step 11. **Uploading files to website.**
++ Step 11. **Creating a pipeline.**
++ Step 12. **Uploading files to website.**
 
 As you can see, most of the steps will be automated in an AWS CloudFormation template, which will be explained throughout this document. While the final steps will be configured manually on AWS and GitHub, the goal is the same: to automate the process of updating the code and deploying the resources used to host the website.
 
@@ -25,12 +29,14 @@ As you can see, most of the steps will be automated in an AWS CloudFormation tem
 
 The following image provides a view of the proposed architecture for deploying website resources.
 
+![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/dev/aws-website-cloudfront.png)
+
 1. A CloudFormation template is designed to provision the resources for this solution
-2. The stack is created in CloudFormation with the appropriate role adhering to the least privilege principle
+2. The stack is created in CloudFormation with the appropriate role, adhering to the least privilege principle
  
 <br>
 
-1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/arc-01.png)Developer makes changes to the website and pushes them to the remote repository
+1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/arc-01.png) Developer makes changes to the website and pushes them to the remote repository
 2. Using the AWS Connector application on GitHub, the connection to AWS has been established to report changes to the project.
 3. A trigger is activated and the source stage of the pipeline is started.
 4. The deployment stage starts, which updates the files in the S3 bucket
@@ -50,11 +56,6 @@ The following image provides a view of the proposed architecture for deploying w
 6. Cloudfront return the content
 7. User gets the response
 
-
-
-
-
-In this case, the static website consist of a mix if HTML documents, images, CCS stylesheets, and JavaScript files, which will be store on an S3 bucket. Taking advantage of the S3 service, an endpoint will be created, and it can be used for Cloudfront to distribute the website.
 
 ## Services
 
@@ -93,8 +94,8 @@ You can register a domain name on [Amazon Route 53](https://docs.aws.amazon.com/
 
 >**CloudFormation Template:**<br>
 I am an automation enthusiast and I believe Infrastructure as Code (Iac) is the best way to maintain infrastructure integrity, reduce errors, speed up deployments, troubleshoot issues, and track changes over time.<br> 
-Taking advantage of Cloudformation's ability to automate resource deployment, a template will be designed to handle the creation and configuration of the resources involved in the solution. In the following steps, part of the code used in each section will be shown, the complete template is available in a public repository called static-website-cloudformation.<br>
-Some variables will be requested at stack creation and others will be captured during template execution. The YAML format was chosen for this template.
+Taking advantage of Cloudformation's ability to automate resource deployment, a template will be designed to handle the creation and configuration of the resources involved in the solution. In the following steps, part of the code used in each section will be shown, the complete template is available in a public repository called [static-website-cloudformation](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/dev/static-website-with-cloudfront.yaml).<br>
+Some variables will be requested at the stack creation and others will be captured during template execution. The YAML format was chosen for this template.
 
 
 <br>
@@ -356,9 +357,9 @@ In AliasTarget you must specify a HostedZoneId, which is an alias resource recor
 
 <br>
 
-**9. Creating the stack with Cloudformation**
+**10. Creating the stack with Cloudformation**
 
-Once we have finished designing the template for our stack, it is time to build it. As I mentioned before, the complete template is available in a public repository on GitHub called static-website-cloudformation.
+Once we have finished designing the template for our stack, it is time to build it. As I mentioned before, the complete template is available in a public repository on GitHub called [static-website-cloudformation](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/dev/static-website-with-cloudfront.yaml).
 
 You can use a tool named [Application Composer](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/app-composer-for-cloudformation.html) in CloudFormation console mode to validate your template and also you can drag, drop, configure, and connect a variety of resources onto a visual canvas.
 
@@ -376,14 +377,14 @@ To [create the stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserG
 ---
 
 >**Final steps:**<br>
-In this section 
+In this section, we need to upload the files needed to update the website. To do this, we need to create a pipeline that will allow us to update any changes in our GitHub repository and automatically upload them to the S3 bucket.
 
 
 <br>
 
-**10. Creating a pipeline**
+**11. Creating a pipeline**
 
-Once the resources have been created, we need to upload the files needed to update the website. To do this, we need to create a pipeline that allows us to upload a change to our GitHub repository and automatically update it to the S3 bucket.
+A pipeline has been designed with two stages: a souce stage that will be triggered when a commit is made to the GitHub repository, and then a deployment stage that will update the files to the S3 bucket.
 
 To create a [Pipeline](https://docs.aws.amazon.com/codepipeline/latest/userguide/pipelines-create.html) you need to follow these steps:
 
@@ -416,6 +417,6 @@ To create a [Pipeline](https://docs.aws.amazon.com/codepipeline/latest/userguide
 
 <br>
 
-**11. Uploading files to website**
+**12. Uploading files to website**
 
 Once the steps above are complete, you can make changes to your website code (any HTML, CSS, or Java files) and push the files to your remote repository ([GitHub.com](https://github.com/)). You can then verify in the pipeline that the source and deploy stages were triggered and the changes are uploaded to the repository within seconds. You can then visit your website to verify those changes were applied.
