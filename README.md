@@ -25,6 +25,8 @@ To meet the goal of this project, it has been divided into 3 sections. The first
 
 As you can see, most of the steps will be automated in an AWS CloudFormation template, which will be explained throughout this document. While the final steps will be configured manually on AWS and GitHub, the goal is the same: to automate the process of updating the code and deploying the resources used to host the website.
 
+<br>
+
 ## Architecture
 
 The following image provides a view of the proposed architecture for deploying website resources.
@@ -56,6 +58,7 @@ The following image provides a view of the proposed architecture for deploying w
 6. Cloudfront return the content
 7. User gets the response
 
+<br>
 
 ## Services
 
@@ -68,12 +71,12 @@ The following image provides a view of the proposed architecture for deploying w
 - [AWS CloudFormation](https://docs.aws.amazon.com/cloudformation/) helps you set up AWS resources, provision them quickly and consistently, and manage them throughout their lifecycle. You can use a template to describe your resources and their dependencies, and launch and configure them together as a stack, instead of managing resources individually. You can manage and provision stacks across multiple AWS accounts and AWS Regions.
 - [AWS Codepipeline](https://docs.aws.amazon.com/codepipeline/) helps you quickly model and configure the different stages of a software release and automate the steps required to release software changes continuously.
 
+<br>
+
 ## Step by Step
 
 >**Initial setup:**<br>
 In these initial steps, we will focus on preparing the website source code, uploading it to our repository, and reserving the domain name. This setup process will be run almost entirely on external platforms, but AWS has products that can provide these facilities.
-
-
 
 **1. Creating a static webstite**
 
@@ -93,12 +96,10 @@ You can register a domain name on [Amazon Route 53](https://docs.aws.amazon.com/
 ---
 
 >**CloudFormation Template:**<br>
-I am an automation enthusiast and I believe Infrastructure as Code (Iac) is the best way to maintain infrastructure integrity, reduce errors, speed up deployments, troubleshoot issues, and track changes over time.<br> 
-Taking advantage of Cloudformation's ability to automate resource deployment, a template will be designed to handle the creation and configuration of the resources involved in the solution. In the following steps, part of the code used in each section will be shown, the complete template is available in a public repository called [static-website-cloudformation](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/dev/static-website-with-cloudfront.yaml).<br>
+Infrastructure as Code (Iac) is the best way to maintain infrastructure integrity, reduce errors, speed up deployments, troubleshoot issues, and track changes over time. Taking advantage of Cloudformation's ability to automate resource deployment, a template will be designed to handle the creation and configuration of the resources involved in the solution.<br>
+In the following steps, part of the code used in each section will be shown, the complete template is available in a public repository called [static-website-cloudformation](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/dev/static-website-with-cloudfront.yaml).<br>
 Some variables will be requested at the stack creation and others will be captured during template execution. The YAML format was chosen for this template.
 
-
-<br>
 
 **3. Creating S3 buckets**
 
@@ -379,9 +380,6 @@ To [create the stack](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserG
 >**Final steps:**<br>
 In this section, we need to upload the files needed to update the website. To do this, we need to create a pipeline that will allow us to update any changes in our GitHub repository and automatically upload them to the S3 bucket.
 
-
-<br>
-
 **11. Creating a pipeline**
 
 A pipeline has been designed with two stages: a souce stage that will be triggered when a commit is made to the GitHub repository, and then a deployment stage that will update the files to the S3 bucket.
@@ -420,3 +418,28 @@ To create a [Pipeline](https://docs.aws.amazon.com/codepipeline/latest/userguide
 **12. Uploading files to website**
 
 Once the steps above are complete, you can make changes to your website code (any HTML, CSS, or Java files) and push the files to your remote repository ([GitHub.com](https://github.com/)). You can then verify in the pipeline that the source and deploy stages were triggered and the changes are uploaded to the repository within seconds. You can then visit your website to verify those changes were applied.
+
+<br>
+
+## Summary
+
+When the resources created for this solution are no longer required, it is important to perform an appropriate cleanup of the resources created by the stack. To do this, you can use the CloudFormation console and follow this [guide](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html). Remember to review the retention policies in the template (especially for S3 buckets) and especially the events in the stack deletion process to avoid additional charges to the AWS account.
+
+At the end of this project we have learned how to configure a static website on Amazon S3 with CloudFront but adding the complexity of designing a stack that creates and configures most of the resources required for such a solution. Also the creation of a simple pipeline that keeps our website updated automatically.
+
+## References
+
+- https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/getting-started-cloudfront-overview.html
+- https://docs.aws.amazon.com/AmazonCloudFront/latest/DeveloperGuide/cnames-and-https-requirements.html
+- https://docs.aws.amazon.com/codepipeline/latest/userguide/pipelines-create.html
+- https://docs.aws.amazon.com/codepipeline/latest/userguide/connections-github.html
+- https://dev.to/neetumallan/deploying-commits-from-github-repo-to-aws-s3-bucket-4f2l
+- https://dev.to/tiamatt/aws-project-module-4-use-cloudfront-distribution-to-serve-a-static-website-hosted-on-aws-s3-via-cloudformation-226m
+- https://docs.aws.amazon.com/codepipeline/latest/userguide/connections-github.html
+- https://docs.aws.amazon.com/AmazonS3/latest/userguide/HostingWebsiteOnS3Setup.html
+- https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/getting-started-cloudfront-overview.html
+
+
+
+
+
