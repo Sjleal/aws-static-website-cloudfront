@@ -1,19 +1,22 @@
 AWSTemplateFormatVersion: 2010-09-09
 
-## =================== DESCRIPTION =================== ##
-Description: >-
-  AWS CloudFormation template to host a static website on Amazon S3 + CloudFront + Route53
-  - Create two S3 buckets, one of them for subdomain and configure it to host a static website and the other one for root domain and set it up to redirect requests to S3 bucket for subdomain
-  - Create records in a public hosted zone in Route 53 to define how you want to route traffic on the internet for the domain and its subdomains
-  - Request a public SSL/TLS certificate from AWS Certificate Manager for the domain name
-  - Create an Origin Access Identity that you can associate with Amazon S3 origins
-  - Create two CloudFront distributions for subdomain and root domain. Point each of them to its corresponding S3 bucket from which CloudFront gets the files to distribute
-  - Create a policy for S3 bucket for subdomain to let CloudFront OAI access S3 bucket content and deny access for non SSL access to S3 bucket
-  - Create a Route 53 record set group to route DNS traffic to CloudFront domain for both - domain and subdomain
+Description: AWS CloudFormation template to host a static website on Amazon S3 +
+  CloudFront + Route53 - Create two S3 buckets, one of them for subdomain and
+  configure it to host a static website and the other one for root domain and
+  set it up to redirect requests to S3 bucket for subdomain - Create records in
+  a public hosted zone in Route 53 to define how you want to route traffic on
+  the internet for the domain and its subdomains - Request a public SSL/TLS
+  certificate from AWS Certificate Manager for the domain name - Create an
+  Origin Access Identity that you can associate with Amazon S3 origins - Create
+  two CloudFront distributions for subdomain and root domain. Point each of them
+  to its corresponding S3 bucket from which CloudFront gets the files to
+  distribute - Create a policy for S3 bucket for subdomain to let CloudFront OAI
+  access S3 bucket content and deny access for non SSL access to S3 bucket -
+  Create a Route 53 record set group to route DNS traffic to CloudFront domain
+  for both - domain and subdomain
 
-## ===================== METADATA ===================== ##
 Metadata:
-  'AWS::CloudFormation::Interface':
+  AWS::CloudFormation::Interface:
     ParameterGroups:
       - Label:
           default: DNS parameters
@@ -25,7 +28,6 @@ Metadata:
         Parameters:
           - punitag
 
-## ==================== PARAMETERS ==================== ##
 Parameters:
   proot:
     Description: Specify a root domain for your website
@@ -38,20 +40,13 @@ Parameters:
     Description: Specify a unique name for tag this stack resources.
     Type: String
     Default: static-website-hosting-to-s3
-    AllowedPattern: "[\\x20-\\x7E]*"
+    AllowedPattern: '[\x20-\x7E]*'
     ConstraintDescription: Must contain only ASCII characters
 
-## ==================== MAPPINGS ==================== ##
-# Mappings:
-
-## ==================== CONDITIONS ==================== ##
-# Conditions:
-
-## =================== RESOURCES =================== ##
 Resources:
   # Create a S3 bucket for subdomain and configure it to host a static website
   s3bucketsub:
-    Type: 'AWS::S3::Bucket'
+    Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
       BucketName: !Sub ${psub}.${proot}
@@ -62,16 +57,16 @@ Resources:
         Status: Enabled
       BucketEncryption:
         ServerSideEncryptionConfiguration:
-        - BucketKeyEnabled: true
-          ServerSideEncryptionByDefault:
-            SSEAlgorithm: "AES256"
+          - BucketKeyEnabled: true
+            ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
       Tags:
         - Key: cf-static-web
           Value: !Ref punitag
 
   # Create a S3 bucket for root domain and set it up to redirect requests to S3 bucket for subdomain
   s3bucketroot:
-    Type: 'AWS::S3::Bucket'
+    Type: AWS::S3::Bucket
     DeletionPolicy: Retain
     Properties:
       BucketName: !Ref proot
@@ -86,18 +81,18 @@ Resources:
 
   # Create records in a public hosted zone in Route 53 to define how you want to route traffic on the internet for the domain and its subdomains
   r53hostzone:
-    Type: 'AWS::Route53::HostedZone'
+    Type: AWS::Route53::HostedZone
     Properties:
-      HostedZoneConfig: 
+      HostedZoneConfig:
         Comment: !Sub Public hosted zone for ${proot}
       Name: !Ref proot
-      HostedZoneTags: 
+      HostedZoneTags:
         - Key: cf-static-web
           Value: !Ref punitag
 
   # Request a public SSL/TLS certificate from AWS Certificate Manager for the domain name and all its subdomains
   sslcert:
-    Type: 'AWS::CertificateManager::Certificate'
+    Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: !Ref proot
       SubjectAlternativeNames:
@@ -112,28 +107,28 @@ Resources:
 
   # Create an Origin Access Identity that you can associate with Amazon S3 origins
   cfoai:
-    Type: 'AWS::CloudFront::CloudFrontOriginAccessIdentity'
+    Type: AWS::CloudFront::CloudFrontOriginAccessIdentity
     Properties:
       CloudFrontOriginAccessIdentityConfig:
-        Comment: 'OAI for S3 origins'
+        Comment: OAI for S3 origins
 
   # Create a CloudFront distribution for subdomain. Point it to S3 bucket for subdomain from which CloudFront gets the files to distribute
   cfdistsub:
-    Type: 'AWS::CloudFront::Distribution'
+    Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Comment: CloudFront distribution points to S3 bucket for subdomain
         Origins:
-          - DomainName: !Sub '${psub}.${proot}.s3.${AWS::Region}.amazonaws.com'
-            Id: !Sub 'S3Origin-${psub}.${proot}'
+          - DomainName: !Sub ${psub}.${proot}.s3.${AWS::Region}.amazonaws.com
+            Id: !Sub S3Origin-${psub}.${proot}
             S3OriginConfig:
-              OriginAccessIdentity: !Sub 'origin-access-identity/cloudfront/${cfoai}'
+              OriginAccessIdentity: !Sub origin-access-identity/cloudfront/${cfoai}
         Aliases:
-          - !Sub '${psub}.${proot}'
+          - !Sub ${psub}.${proot}
         CustomErrorResponses:
           - ErrorCode: 403
             ResponseCode: 404
-            ResponsePagePath: '/error.html'
+            ResponsePagePath: /error.html
             ErrorCachingMinTTL: 60
         DefaultCacheBehavior:
           AllowedMethods:
@@ -152,9 +147,9 @@ Resources:
               Forward: none
           MaxTTL: 86400
           MinTTL: 60
-          TargetOriginId: !Sub 'S3Origin-${psub}.${proot}'
-          ViewerProtocolPolicy: 'redirect-to-https'
-        DefaultRootObject: 'index.html' 
+          TargetOriginId: !Sub S3Origin-${psub}.${proot}
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
         Enabled: true
         HttpVersion: http2
         PriceClass: PriceClass_All
@@ -167,47 +162,47 @@ Resources:
 
   # Create a policy for S3 bucket for subdomain to let CloudFront OAI access S3 bucket content and deny access for non SSL access to S3 bucket
   policys3bucketsub:
-    Type: 'AWS::S3::BucketPolicy'
+    Type: AWS::S3::BucketPolicy
     Properties:
-      Bucket: !Sub '${psub}.${proot}'
+      Bucket: !Sub ${psub}.${proot}
       PolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
-        - Action: 's3:GetObject'
-          Effect: Allow
-          Resource: !Sub 'arn:aws:s3:::${psub}.${proot}/*'
-          Principal:
-            CanonicalUser: !GetAtt cfoai.S3CanonicalUserId
-        - Sid: AllowSSLRequestsOnly 
-          Effect: Deny
-          Principal: '*'
-          Action: 's3:*'
-          Resource:
-          - !Sub 'arn:aws:s3:::${psub}.${proot}'
-          - !Sub 'arn:aws:s3:::${psub}.${proot}/*'
-          Condition:
-            Bool:
-              'aws:SecureTransport': false
+          - Action: s3:GetObject
+            Effect: Allow
+            Resource: !Sub arn:aws:s3:::${psub}.${proot}/*
+            Principal:
+              CanonicalUser: !GetAtt cfoai.S3CanonicalUserId
+          - Sid: AllowSSLRequestsOnly
+            Effect: Deny
+            Principal: '*'
+            Action: s3:*
+            Resource:
+              - !Sub arn:aws:s3:::${psub}.${proot}
+              - !Sub arn:aws:s3:::${psub}.${proot}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: false
 
   # Create a CloudFront distribution for root domain. Point it to S3 bucket for root domain
   cfdistroot:
-    Type: 'AWS::CloudFront::Distribution'
+    Type: AWS::CloudFront::Distribution
     Properties:
       DistributionConfig:
         Comment: CloudFront distribution points to S3 bucket for root domain
-        Origins: 
-          - DomainName: !Sub '${proot}.s3-website-${AWS::Region}.amazonaws.com'
-            Id: !Sub 'RedirectS3Origin-${proot}' 
+        Origins:
+          - DomainName: !Sub ${proot}.s3-website-${AWS::Region}.amazonaws.com
+            Id: !Sub RedirectS3Origin-${proot}
             CustomOriginConfig:
               HTTPPort: 80
               HTTPSPort: 443
-              OriginProtocolPolicy: 'http-only' 
+              OriginProtocolPolicy: http-only
         Aliases:
-          - !Sub '${proot}'
+          - !Sub ${proot}
         CustomErrorResponses:
           - ErrorCode: 403
             ResponseCode: 404
-            ResponsePagePath: '/error.html'
+            ResponsePagePath: /error.html
             ErrorCachingMinTTL: 60
         DefaultCacheBehavior:
           AllowedMethods:
@@ -226,9 +221,9 @@ Resources:
               Forward: none
           MaxTTL: 86400
           MinTTL: 60
-          TargetOriginId: !Sub 'RedirectS3Origin-${proot}'
-          ViewerProtocolPolicy: 'redirect-to-https'
-        DefaultRootObject: 'index.html' 
+          TargetOriginId: !Sub RedirectS3Origin-${proot}
+          ViewerProtocolPolicy: redirect-to-https
+        DefaultRootObject: index.html
         Enabled: true
         HttpVersion: http2
         PriceClass: PriceClass_All
@@ -241,66 +236,47 @@ Resources:
 
   # Create a Route 53 record set group to route DNS traffic to CloudFront domain for both - domain and subdomain
   r53hostzonerecords:
-    Type: 'AWS::Route53::RecordSetGroup'
+    Type: AWS::Route53::RecordSetGroup
     Properties:
       Comment: Route53 record for CloudFront distributions for root domain and subdomain
       HostedZoneId: !GetAtt r53hostzone.Id
       RecordSets:
-        - Name: !Sub '${psub}.${proot}.'
+        - Name: !Sub ${psub}.${proot}.
           Type: A
           AliasTarget:
-              DNSName: !GetAtt cfdistsub.DomainName
-              HostedZoneId: Z2FDTNDATAQYW2
-        - Name: !Sub '${proot}.'
+            DNSName: !GetAtt cfdistsub.DomainName
+            HostedZoneId: Z2FDTNDATAQYW2
+        - Name: !Sub ${proot}.
           Type: A
           AliasTarget:
-              DNSName: !GetAtt cfdistroot.DomainName 
-              HostedZoneId: Z2FDTNDATAQYW2
+            DNSName: !GetAtt cfdistroot.DomainName
+            HostedZoneId: Z2FDTNDATAQYW2
 
-## ======================= OUTPUT ====================== ##
 Outputs:
-  outputS3WebsiteURLForRootDomain:
-    Description: Amazon S3 website endpoint for root domain
-    Value: !GetAtt s3bucketroot.WebsiteURL
-  outputS3DomainNameForRootDomain:
-    Description:  IPv4 DNS name of S3 bucket for root domain
-    Value: !GetAtt s3bucketroot.DomainName
-  outputS3RegionalDomainNameForRootDomain:
-    Description:  Regional domain name of S3 bucket for root domain
-    Value: !GetAtt s3bucketroot.RegionalDomainName 
-  outputS3WebsiteURLForSubdomain:
-    Description: Amazon S3 website endpoint for subdomain
-    Value: !GetAtt s3bucketsub.WebsiteURL
-  outputS3DomainNameForSubdomain:
-    Description:  IPv4 DNS name of S3 bucket for subdomain
-    Value: !GetAtt s3bucketsub.DomainName
-  outputS3RegionalDomainNameForSubdomain:
-    Description:  Regional domain name of S3 bucket for subdomain
-    Value: !GetAtt s3bucketsub.RegionalDomainName  
-  outputRoute53HostedZoneId:
-    Description: Public hosted zone ID
-    Value: !GetAtt r53hostzone.Id 
-  outputRoute53HostedZoneNameServers:
-    Description: List of name servers for newly created public hosted zone
-    Value: !Join [', ', !GetAtt r53hostzone.NameServers] 
-  outputCertificateArn:
-    Description: Issued SSL certificate Arn
+  otWebsiteURLForRootDomain:
+    Description: Website URL for root domain
+    Value: !Sub https://${proot}/
+  otWebsiteURLForSubDomain:
+    Description: Website URL for sub domain
+    Value: !Sub https://${psub}.${proot}/
+  otS3BucketForRootDomain:
+    Description: Amazon S3 bucket for root domain
+    Value: !Ref s3bucketroot
+  otS3BucketForSubDomain:
+    Description: Amazon S3 bucket for subdomain
+    Value: !Ref s3bucketsub
+  otRoute53HostZone:
+    Description: Amazon Route53 hosted Zone
+    Value: !Ref r53hostzone
+  otACMCertificate:
+    Description: ACM Certificate
     Value: !Ref sslcert
-  outputCloudFrontDistributionForSubdomainId:
-    Description: CloudFront distribution ID for subdomain
-    Value: !Ref cfdistsub
-  outputCloudFrontDistributionDomainNameForSubdomain:
-    Description: CloudFront distribution domain name for subdomain
-    Value: !GetAtt cfdistsub.DomainName
-  outputCloudFrontDistributionForRootDomainId:
-    Description: CloudFront distribution ID for root domain
+  otCloudFrontDistForRootDomain:
+    Description: Amazon CloudFront Distribution for root domain
     Value: !Ref cfdistroot
-  outputCloudFrontDistributionDomainNameForRootDomain:
-    Description: CloudFront distribution domain name for root domain
-    Value: !GetAtt cfdistroot.DomainName  
-  outputWebsiteURLForSubdomain:
-    Description: Website url for subdomain
-    Value: !Sub 'https://${psub}.${proot}/'
-  outputWebsiteURLForRootDomain:
-    Description: Website url for root domain
-    Value: !Sub 'https://${proot}/'
+  otCloudFrontDistForSubDomain:
+    Description: Amazon CloudFront Distribution for subdomain
+    Value: !Ref cfdistsub
+  otCloudFrontOAI:
+    Description: Amazon CloudFront Origin Access Identity
+    Value: !Ref cfoai
