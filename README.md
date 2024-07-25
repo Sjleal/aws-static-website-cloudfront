@@ -33,19 +33,19 @@ The following image provides a view of the proposed architecture for deploying w
 
 ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/aws-website-cloudfront.png)
 
-1. A CloudFormation template is designed to provision the resources for this solution
+1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/arc-01.png) A CloudFormation template is designed to provision the resources for this solution
 2. The stack is created in CloudFormation with the appropriate role, adhering to the least privilege principle
  
 <br>
 
-1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/arc-01.png) Developer makes changes to the website and pushes them to the remote repository
+1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/dev-01.png) Developer makes changes to the website and pushes them to the remote repository
 2. Using the AWS Connector application on GitHub, the connection to AWS has been established to report changes to the project.
 3. A trigger is activated and the source stage of the pipeline is started.
 4. The deployment stage starts, which updates the files in the S3 bucket
 
 <br>
 
-1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/dev-01.png) User makes the request to the website. 
+1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/usr-01.png) User makes the request to the website. 
 2. Route53, acting as DNS, routes the request to the corresponding Cloudfront distribution
 3. ACM is integrated with CloudFront to deploy the ACM certificate on the CloudFront distributions
 4. If the requested content can be served from the cache it will be delivered immediately from the edge location closest to the user. If the content is not cached, CloudFront requests the content directly from S3 buckets
@@ -425,7 +425,7 @@ Once the steps above are complete, you can make changes to your website code (an
 
 ## Summary
 
-When the resources created for this solution are no longer required, it is important to perform an appropriate cleanup of the resources created by the stack. To do this, you can use the CloudFormation console and follow this [guide](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html). Remember to review the retention policies in the template (especially for S3 buckets) and especially the events in the stack deletion process to avoid additional charges to the AWS account.
+When the resources created for this solution are no longer required, it is important to perform an appropriate cleanup of the resources created by the stack. To do this, you can use the CloudFormation console and follow this [guide](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/cfn-console-delete-stack.html). Remember to review the retention policies in the template (especially for S3 buckets) and the events in the stack deletion process to avoid additional charges to the AWS account.
 
 At the end of this project we have learned how to configure a static website on Amazon S3 with CloudFront but adding the complexity of designing a stack that creates and configures most of the resources required for such a solution. Also the creation of a simple pipeline that keeps our website updated automatically.
 
