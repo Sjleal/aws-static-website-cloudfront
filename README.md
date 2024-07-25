@@ -33,30 +33,42 @@ The following image provides a view of the proposed architecture for deploying w
 
 ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/aws-website-cloudfront.png)
 
-1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/arc-01.png) A CloudFormation template is designed to provision the resources for this solution
-2. The stack is created in CloudFormation with the appropriate role, adhering to the least privilege principle
+#### Architect
+  <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#10739e"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">1</text></svg> A CloudFormation template is designed to provision the resources for this solution
+
+  <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#10739e"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">2</text></svg> The stack is created in CloudFormation with the appropriate role, adhering to the least privilege principle
  
 <br>
 
-1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/dev-01.png) Developer makes changes to the website and pushes them to the remote repository
-2. Using the AWS Connector application on GitHub, the connection to AWS has been established to report changes to the project.
-3. A trigger is activated and the source stage of the pipeline is started.
-4. The deployment stage starts, which updates the files in the S3 bucket
+#### Developer
+  <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#d72121"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">1</text></svg> Developer makes changes to the website and pushes them to the remote repository
+
+  <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#d72121"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">2</text></svg> Using the AWS Connector application on GitHub, the connection to AWS has been established to report changes to the project.
+  
+  <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#d72121"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">3</text></svg> A trigger is activated and the source stage of the pipeline is started.
+  
+  <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#d72121"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">4</text></svg> The deployment stage starts, which updates the files in the S3 bucket
 
 <br>
 
-1. ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/usr-01.png) User makes the request to the website. 
-2. Route53, acting as DNS, routes the request to the corresponding Cloudfront distribution
-3. ACM is integrated with CloudFront to deploy the ACM certificate on the CloudFront distributions
-4. If the requested content can be served from the cache it will be delivered immediately from the edge location closest to the user. If the content is not cached, CloudFront requests the content directly from S3 buckets
+#### User
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#2e9e10"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">1</text></svg> User makes the request to the website. 
 
-   A. The request is for the subdomain bucket, it contains the website and delivered to Cloudfront.
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#2e9e10"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">2</text></svg> Route53, acting as DNS, routes the request to the corresponding Cloudfront distribution
+
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#2e9e10"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">3</text></svg> ACM is integrated with CloudFront to deploy the ACM certificate on the CloudFront distributions
+
+  If the requested content can be served from the cache it will be delivered immediately from the edge location closest to the user. If the content is not cached, CloudFront requests the content directly from S3 buckets
+
+   <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#2e9e10"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">4a</text></svg> The request is for the subdomain bucket, it contains the website and delivered to Cloudfront.
     
-   B. The request is for the domain bucket, in this case the request is redirected to the subdomain bucket, and delivered to Cloudfront.
+   <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#2e9e10"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">4b</text></svg> The request is for the domain bucket, in this case the request is redirected to the subdomain bucket, and delivered to Cloudfront.
 
-5. Cloudfront gets the updated content from the subdomain bucket.    
-6. Cloudfront return the content
-7. User gets the response
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#2e9e10"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">5</text></svg> Cloudfront gets the updated content from the subdomain bucket.    
+
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#2e9e10"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">6</text></svg> Cloudfront return the content
+
+<svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#2e9e10"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">7</text></svg> User gets the response
 
 <br>
 
