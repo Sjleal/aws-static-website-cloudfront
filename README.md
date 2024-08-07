@@ -34,9 +34,9 @@ The following image provides a view of the proposed architecture for deploying w
 ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/screnshots/diagram/aws-website-cloudfront.png)
 
 #### Architect
-  <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#10739e"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">1</text></svg> A CloudFormation template is designed to provision the resources for this solution
+  ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/b1.svg) A CloudFormation template is designed to provision the resources for this solution
 
-  <svg width="16" height="16" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" style="border-radius:50%!important;text-anchor: middle;height: 15px;width: 15px;"><rect width="100%" height="100%" fill="#10739e"></rect><text x="50%" y="50%" fill="#fff" dy=".3em" style="font-size: 11px;font-weight: 700;">2</text></svg> The stack is created in CloudFormation with the appropriate role, adhering to the least privilege principle
+  ![Image description](https://github.com/Sjleal/aws-static-website-cloudfront/blob/main/images/b2.svg) The stack is created in CloudFormation with the appropriate role, adhering to the least privilege principle
  
 <br>
 
